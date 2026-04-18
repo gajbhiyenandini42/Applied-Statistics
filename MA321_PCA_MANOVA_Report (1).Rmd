@@ -1,0 +1,75 @@
+---
+title: "PCA and MANOVA Analysis of Housing Data"
+author: "NANDINI GAJBHIYE"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+## **Introduction**
+
+This report uses the housing dataset house_data.csv to study property characteristics from an estate agency perspective with the help of Principal Components Analysis (PCA) and Multivariate Analysis of Variance (MANOVA). PCA is applied to reduce the number of numerical variables and to highlight the main patterns in the data. MANOVA is then used to determine whether housing features change across different levels of overall house condition. PCA is suitable because many housing variables describe related aspects, such as space and room counts, and are therefore closely connected. MANOVA helps show whether differences in house condition are linked to noticeable differences in housing characteristics when all variables are considered together.
+
+## **Data Loading and Preprocessing**
+
+The dataset is assumed to be complete and correctly entered, with no errors in the recorded values. Each observation corresponds to a separate house and is considered independent. The numerical variables are treated as continuous, while the overall house condition is used as a categorical variable. It is also assumed that there are no missing values in the variables included in the analysis.
+
+```{r load-data}
+df <- read.csv("house_data.csv", header = TRUE)
+str(df)
+summary(df)
+```
+
+```{r preprocessing}
+quant_vars <- df[, c("SalePrice", "LotArea", "BsmtSQFT", "X1stFlrSQFT", "X2ndFlrSQFT",
+                     "LivArea", "BathNos", "BedNos", "TotRooms", "GarageArea")]
+
+df$OverallCond <- factor(df$OverallCond,
+                         levels = c(1, 2, 3),
+                         labels = c("Fair", "Very Good", "Excellent"))
+```
+
+The data were organised before analysis to make them suitable for multivariate methods. The main numerical variables were chosen for PCA and MANOVA, and the overall house condition was handled as a categorical variable. This ensured that the analysis was carried out correctly and that the results were easy to interpret.
+
+## **Principal Components Analysis (PCA)**
+
+PCA is used to simplify the data by reducing a large number of numerical variables into a smaller group of new variables that are not related to each other. Because the original variables are measured on different scales, they were standardised before performing the analysis. PCA works best when variables are related and show linear patterns, which is reasonable here since many housing variables describe similar features of a property.
+
+The results show that the first principal component accounts for about 55.5% of the total variation in the data. Together, the first three components explain around 86.8% of the total variance. Based on this cumulative variance, three components were kept, reducing the number of variables from ten to three.
+
+```{r pca-analysis}
+pca_res <- prcomp(quant_vars, scale. = TRUE)
+summary(pca_res)
+```
+
+```{r scree-plot}
+plot(pca_res, type = "l")
+```
+```{r pca-loadings}
+pca_res$rotation
+```
+The PCA results show that most of the information in the housing data can be explained using only a small number of principal components. In particular, the first three components together explain about 86.8% of the total variation in the dataset. This means that instead of working with many original variables that are related to each other, the data can be described using just three new components without losing much information.
+
+The first principal component mainly represents overall house size and value, as it is strongly influenced by variables such as living area and sale price. The second and third components capture other important features, including the structure of the building and the internal layout of the house. Overall, these results show that PCA successfully reduced the complexity of the data while still keeping the most important patterns needed for analysis.
+
+## **Multivariate Analysis of Variance (MANOVA)**
+
+MANOVA works under a few basic assumptions. First, it assumes that each house in the dataset is independent, meaning the information from one house does not affect another. It also assumes that the numerical variables follow a roughly normal pattern within each category of house condition. Another assumption is that the level of variation in the data is similar across the different condition groups.
+
+In this dataset, each row represents a different property, so treating the observations as independent is reasonable. The number of houses in each condition group is sufficient to support the assumption of normality. In addition, the data do not show large differences in spread between groups. Therefore, the assumptions required for MANOVA are acceptable for this analysis.
+
+```{r manova-model}
+manova_fit <- manova(as.matrix(quant_vars) ~ OverallCond, data = df)
+summary(manova_fit, test = "Wilks")
+```
+The Wilks’ Lambda test strongly rejects the null hypothesis that the multivariate mean vectors are equal across levels of overall house condition (p < 0.001). This provides strong evidence that housing characteristics such as price, size, and room configuration differ significantly between condition categories when considered jointly.
+
+\newpage
+
+## **Conclusion**
+
+This report used PCA and MANOVA to analyse housing data from an estate agency perspective. PCA helped reduce the number of numerical variables by combining related information into three main components, which together explained about 86.8% of the total variation in the data. These components made it easier to understand the main features of the houses, such as their overall size and value, building structure, and internal layout.
+
+MANOVA was then used to compare housing characteristics across different levels of overall house condition. The results showed clear differences between condition groups, meaning that features like price, house size, and room numbers change depending on the condition of the property. Overall, this analysis shows that multivariate methods are useful for simplifying complex housing data and helping estate agencies make better, data-driven decisions.
